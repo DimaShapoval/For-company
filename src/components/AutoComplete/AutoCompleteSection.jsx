@@ -15,7 +15,8 @@ import SearchFailResultView from "../SearchResult/SearchFailResultView";
 
 import travelData from "../../cheapTripData/routes.json"; //----travel_data.json
 import dataNew from "../../cheapTripData/locations.json";
-import { RoutesList } from "./RoutesList";
+import RoutesList  from "./RoutesList";
+import { object } from "yup";
 
 export const AutoCompleteSection = () => {
   const [cityName, setCityName] = useState(""); ///******data from input FROM******** */
@@ -30,7 +31,7 @@ export const AutoCompleteSection = () => {
   const [isFailResult, setIsFailResult] = useState(false);
   const [resultOfSearch, setResultOfSearch] = useState(null);
   const [isActiveTo, setIsActiveTo] = useState(false);
-  const [routesList, setRoutesList] = useState([]);
+  const [routesList, setRoutesList] = useState([]); ////////****data after click and secod input has value Anywhere***/ 
 
   const findCityData = (curCity) => {
     const result = Object.values(dataNew).filter((item) => {
@@ -153,67 +154,82 @@ export const AutoCompleteSection = () => {
     setIsFailResult(false);
   };
   const handleClickResults = () => {
-    const result = [];
-    // console.log(myJson);
-    // console.log(myJson2);
-    const cityFromYouTravel = findCityData(myJson);
-    const cityToYouTravel = findCityData(myJson2);
-    // console.log(cityFromYouTravel);
-
-    result.push(findRoutes(cityFromYouTravel, cityToYouTravel));
-    console.log(result);
-    if (
-      result[0] === "We have not found such a route" ||
-      result[0].length === 0
-      // result[0] === []
-    ) {
-      setIsResult(false);
-      setIsFailResult(true);
-    } else {
-      setIsResult(true);
-      setIsFailResult(false);
-      setResultOfSearch(result);
+    if(cityNameTo !== "Anywhere"){
+      setRoutesList([]);
+      const result = [];
+      // console.log(myJson);
+      // console.log(myJson2);
+      const cityFromYouTravel = findCityData(myJson);
+      const cityToYouTravel = findCityData(myJson2);
+      // console.log(cityFromYouTravel);
+  
+      result.push(findRoutes(cityFromYouTravel, cityToYouTravel));
+      console.log(result);
+      if (
+        result[0] === "We have not found such a route" ||
+        result[0].length === 0
+        // result[0] === []
+      ) {
+        setIsResult(false);
+        setIsFailResult(true);
+      } else {
+        setIsResult(true);
+        setIsFailResult(false);
+        setResultOfSearch(result);
+      }
     }
+    else if(cityNameTo === "Anywhere"){
+      setIsResult(false);
+        setResultOfSearch([]);
+      onBtnClick();
+
+    }
+   
   };
 
   const getIdByCityFrom = (cityName) => {
     const values = Object.values(dataNew);
     const filtered = values.filter((item) => cityName === item.name);
-    console.log(filtered);
     return filtered[0].id;
   };
 
   const getListRoutes = () => {
-    getCitiesToListById();
+    
     const cityFromId = getIdByCityFrom(cityName);
     const values = Object.values(travelData);
     const filtered = values.filter((item) => cityFromId === item.from);
+    getCitiesToListById(filtered);
     return filtered;
   };
 
-  const getCitiesToListById = () => {
+  const getCitiesToListById = (filterArray) => {
     const values = Object.values(dataNew);
-
     let cache;
     const ln1 = values.length;
     const ln2 = routesList.length;
-    for (var i = 0; i < ln1; ++i) {
+    for(let i=0;i<filterArray.length;i++){
+      routesList[i] = filterArray[i]
+    }
+    for (let i = 0; i < ln1; ++i) {
       cache = values[i];
-      for (var j = 0; j < ln2; ++j) {
-        if (cache.id == routesList[j].to) {
-          routesList[j].city = cache.name;
-          routesList[j].country = cache.country_name;
+      setRoutesList(routesList.map((item)=>{
+        if(cache.id === item.to){
+          item.city = cache.name;
+          item.country = cache.country_name;
+          return routesList.push(item)
+          
         }
-      }
+        else{
+          return item;
+        }
+      }))
     }
   };
 
   const onBtnClick = () => {
     const array = getListRoutes();
     const sorted = array.sort((a, b) => (a.euro_price > b.euro_price ? 1 : -1));
-    setRoutesList(sorted);
-    console.log(sorted);
-    console.log(routesList);
+    setRoutesList(sorted);    
   };
   //   import travelData from "../../cheapTripData/routes.json";
   // import dataNew from "../../cheapTripData/locations.json";
@@ -278,7 +294,7 @@ export const AutoCompleteSection = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={onBtnClick}
+          onClick={handleClickResults}
           style={{ marginLeft: "10px" }}
           type="button"
         >
